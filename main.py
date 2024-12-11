@@ -38,9 +38,22 @@ async def create_task(task: Task):
 
 # Get All Tasks
 @app.get("/tasks")
-async def get_tasks():
-    tasks = list(db.tasks.find({}, {"_id": 0}))  # Exclude MongoDB ObjectId
+async def get_tasks(status: Optional[str] = None, limit: int = 10, skip: int = 0):
+    query = {}
+    if status:
+        query["status"] = status
+    tasks = list(db.tasks.find(query).skip(skip).limit(limit))
     return {"tasks": tasks}
+
+#task overdue
+
+@app.get("/tasks/overdue")
+async def get_overdue_tasks():
+    from datetime import datetime
+    now = datetime.utcnow()
+    overdue_tasks = list(db.tasks.find({"due_date": {"$lt": now}}))
+    return {"overdue_tasks": overdue_tasks}
+
 
 # Update a Task
 @app.put("/tasks/{task_id}")
